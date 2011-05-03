@@ -1,0 +1,67 @@
+====================================================================
+== Indexing meta-language ==
+This is a specification of a DSL for defining a structure in which the indexing is done.
+
+
+idea:
+	Raw data comes in the familiar 'request-parameter' form (HTTP query strings)
+	data_type:
+		map[string => array[string]]
+
+	Scope????
+
+	A language to define transformations. The transformation can be seen as an 
+	expansion/emission function on instances of the data type.
+	Defined as a tuple of a 'scope' and an array of expansions/emissions.
+	transform:
+		data_type -> (string, set[string])
+
+	Language requirements:
+		simple to express yet powerful
+		validation / tolerant to corrupt data
+		useful helper functions
+
+example:
+	data = sid=>[site1], ts=>[1303933032], tags=>[tag1,tag2,tag3], a=>[ad1], e=>[0], t=>[3]
+
+	scope:
+		scope $sid/v$$week($ts)
+			site1/v17
+	
+	expansion:
+		# expands all values
+		expand tags[$tags[*]]
+			tags[tag1]
+			tags[tag2]
+			tags[tag3]
+		# expand first element
+		expand tags[$tags]
+			tags[tag1]
+		expand event[$e]
+			event[0]
+		expand ad[$a]
+			ad[ad1]
+		expand foo[$missing]
+			<nothing>
+
+	validation:
+		validate has $sid $ts			# data has fields $sid and $ts
+		validate if  $e[0] $t			# if e == 0, t must exist
+		validate if  $e[13] !$t			# if e == 13, t must not exist
+		validate min $tags[#1]			# tags has at least 1 value, implies 'has $tags'
+		validate max $tags[#4]			# tags has at most 4 values, implies 'has $tags'
+		validate equ $tags[#3]			# tags has exactly 3 values, implies 'has $tags'
+
+	post-transform:
+		(
+			size/v17,
+			set(
+				tags[tag1],
+				tags[tag2],
+				tags[tag3],
+				event[0],
+				ad[ad1]
+			)
+		)
+
+
