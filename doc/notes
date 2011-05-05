@@ -1,5 +1,5 @@
 ====================================================================
-== Indexing meta-language ==
+== Transformation meta-language ==
 This is a specification of a DSL for defining a structure in which the indexing is done.
 
 
