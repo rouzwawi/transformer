@@ -1,14 +1,14 @@
-import com.rouzwawi.transformer._
+import org.rouzwawi.transformer._
 
 // TODO: remember to remove or validate in some other way, empty keys in data
 
 
 // selector functions
-val one: (List[String]) => List[String] = {
+val one: List[String] => List[String] = {
 	case s :: ss => List(s)
 	case Nil => Nil
 }
-val all: (List[String]) => List[String] = {
+val all: List[String] => List[String] = {
 	case l: List[String] => l
 }
 
@@ -21,6 +21,20 @@ val d = Map(
 	"e"    -> List("0"),
 	"t"    -> List("3")
 )
+
+case class Expr(val terms: List[Term]) {
+ def +(v: String) = Expr(Literal(v) :: terms)
+ def ->(func: List[String] => List[String]) = terms match {
+  case Literal(v) :: ts => Expr(Variable(v, func) :: ts)
+  case _ => throw new Exception()
+ }
+ def emit(data: Emit.D) = Emit(terms.reverse) emit data
+}
+
+object expand {
+ def ~(name: String) = Expr(Literal(name) :: Nil)
+}
+import expand._
 
 
 // example emits
