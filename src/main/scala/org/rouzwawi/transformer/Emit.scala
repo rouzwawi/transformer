@@ -11,18 +11,19 @@ package org.rouzwawi.transformer
  */
 
 trait Term
-case class Variable( val name: String, val selector: List[String] => List[String] ) extends Term
+case class Variable( val name: String, val selector: Emit.Selector ) extends Term
 case class Literal( val value: String ) extends Term
 
 case object Emit {
-	type D = Map[String, List[String]]
+	type Data = Map[String, List[String]]
+	type Selector = List[String] => List[String]
 
-	def cat(data: D, terms: List[Term])(value: String) = expand(data, terms) match {
+	def cat(data: Data, terms: List[Term])(value: String) = expand(data, terms) match {
 		case x :: xs => (x :: xs) map { value + _ }
 		case Nil     => value :: Nil
 	}
 
-	def expand(data: D, terms: List[Term]): List[String] = terms match {
+	def expand(data: Data, terms: List[Term]): List[String] = terms match {
 		case t :: ts => t match {
 			case Variable(name, selector) => data get name match {
 				case Some(values) => selector apply values flatMap cat(data, ts)
@@ -35,5 +36,5 @@ case object Emit {
 }
 
 case class Emit( val terms: List[Term] ) {
-	def emit(data: Emit.D) = Emit.expand(data, terms).toSet
+	def emit(data: Emit.Data) = Emit.expand(data, terms)
 }
