@@ -5,18 +5,18 @@ case class param(val v: String) {
 }
 
 object transform {
-	type Rule = scala.collection.mutable.Queue[expr]
+	type Rule  = scala.collection.mutable.Queue[expr]
 	type Scope = scala.collection.mutable.Queue[expr]
-	def rule() = new Rule()
+	def rule()  = new Rule()
 	def scope() = new Scope()
 }
 
 object expand {
 	def ~(name: String) = expr(Literal(name) :: Nil)
-	def ~(term: Term) = expr(term :: Nil)
+	def ~(term: Term)   = expr(term :: Nil)
 	def ~(param: param) = expr(Variable(param.v, selectors.all) :: Nil)
-	def %(name:String) = expand ~ name
-	def %(term: Term) = expand ~ term
+	def %(name:String)  = expand ~ name
+	def %(term: Term)   = expand ~ term
 	def %(param: param) = expand ~ param
 
 	// implicit conversions
@@ -32,23 +32,26 @@ object selectors {
 		case s :: ss => List(s)
 		case Nil => Nil
 	}
+	val split: Emit.Selector = _ flatMap {
+		case v => v.split(",")
+	}
 }
 
 case class expr(val terms: List[Term]) {
 	def apply(f: Emit.Selector) = ->(f)
 
 	def +(v: String) = expr(Literal(v) :: terms)
-	def +(t: Term) = expr(t :: terms)
-	def +(p: param) = expr(Variable(p.v, selectors.all) :: terms)
+	def +(t: Term)   = expr(t :: terms)
+	def +(p: param)  = expr(Variable(p.v, selectors.all) :: terms)
 
 	def ->(f: Emit.Selector) = terms match {
 		case Literal(v) :: ts => expr(Variable(v, f) :: ts)
 		case _ => throw new Exception()
 	}
 
-	def emit(data: Emit.Data) = Emit(terms.reverse) emit data foreach println _
+	def emit(data: Emit.Data): Unit = Emit(terms.reverse) emit data foreach println
 
-	def in(r: transform.Rule) = r += this
+	def in(r: transform.Rule)  = { r += this }
 	def to(s: transform.Scope) = { s.clear; s += this }
 }
 
