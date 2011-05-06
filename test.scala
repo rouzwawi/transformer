@@ -58,12 +58,12 @@ val $ts = param("ts")
 
 // transform rule definition
 val loggy = transform rule
-expand ~ "site["     + $site +           "]"    in loggy
-expand ~ "tag["      + $tags{split} +    "]"    in loggy
-expand ~ "category[" + $shares +         "]"    in loggy
-expand ~ "ad["       + $ad +             "]"    in loggy
-expand ~ "event["    + $event{e_name} +  "]"    in loggy
-expand ~ "format["   + $format{f_name} + "]"    in loggy
+expand ~ "site["     + $site           + "]" in loggy
+expand ~ "tag["      + $tags{split}    + "]" in loggy
+expand ~ "category[" + $shares         + "]" in loggy
+expand ~ "ad["       + $ad             + "]" in loggy
+expand ~ "event["    + $event{e_name}  + "]" in loggy
+expand ~ "format["   + $format{f_name} + "]" in loggy
 
 
 // combining transformation rule
