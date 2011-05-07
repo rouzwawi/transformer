@@ -7,8 +7,8 @@ case class param(val v: String) {
 object transform {
 	type Rule  = scala.collection.mutable.Queue[expr]
 	type Scope = scala.collection.mutable.Queue[expr]
-	def rule()  = new Rule()
-	def scope() = new Scope()
+	def rule  = new Rule()
+	def scope = new Scope()
 }
 
 object expand {
@@ -49,12 +49,12 @@ case class expr(val terms: List[Term]) {
 		case _ => throw new Exception()
 	}
 
-	def emit(data: Emit.Data): Unit = Emit(terms.reverse) emit data foreach println
+	def emit(data: Emit.Data) = Emit(terms.reverse) emit data
 
 	def in(r: transform.Rule)  = { r += this }
 	def to(s: transform.Scope) = { s.clear; s += this }
 }
 
 case class RuleOps(r: transform.Rule) {
-	def emit(d: Emit.Data) = r foreach { _ emit d }
+	def emit(d: Emit.Data) = r flatMap { _ emit d }
 }
