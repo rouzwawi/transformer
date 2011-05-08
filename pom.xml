@@ -95,7 +95,7 @@
 							<id>App</id>
 							<mainClass>org.rouzwawi.transformer.App</mainClass>
 							<jvmArgs>
-								<jvmArg>-Xmx256m</jvmArg>
+								<jvmArg>-Xmx1024m</jvmArg>
 								<!--jvmArg>-Dakka.config=...</jvmArg-->
 							</jvmArgs>
 						</launcher>

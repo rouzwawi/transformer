@@ -4,11 +4,19 @@ case class param(val v: String) {
 	def apply(f: Emit.Selector) = Variable(v, f)
 }
 
+class rule(var emits: List[Emit] = Nil) {
+	def add(e: Emit) = {
+		emits = e :: emits;
+	}
+	def set(e: Emit) = {
+		emits = e :: Nil
+	}
+	def emit(d: Emit.Data) = emits flatMap { _ emit d }
+}
+
 object transform {
-	type Rule  = scala.collection.mutable.Queue[expr]
-	type Scope = scala.collection.mutable.Queue[expr]
-	def rule  = new Rule()
-	def scope = new Scope()
+	def rule  = new rule
+	def scope = new rule
 }
 
 object expand {
@@ -18,9 +26,6 @@ object expand {
 	def %(name:String)  = expand ~ name
 	def %(term: Term)   = expand ~ term
 	def %(param: param) = expand ~ param
-
-	// implicit conversions
-	implicit def ruleWithOps(r: transform.Rule) = RuleOps(r)
 }
 
 object selectors {
@@ -51,10 +56,6 @@ case class expr(val terms: List[Term]) {
 
 	def emit(data: Emit.Data) = Emit(terms.reverse) emit data
 
-	def in(r: transform.Rule)  = { r += this }
-	def to(s: transform.Scope) = { s.clear; s += this }
-}
-
-case class RuleOps(r: transform.Rule) {
-	def emit(d: Emit.Data) = r flatMap { _ emit d }
+	def in(r: rule) = r add Emit(this.terms.reverse)
+	def to(s: rule) = s set Emit(this.terms.reverse)
 }
