@@ -40,6 +40,11 @@ object selectors {
 	val split: Emit.Selector = _ flatMap {
 		case v => v.split(",")
 	}
+	def cat(d: String): Emit.Selector = {
+		case x :: xs => xs.foldLeft(x){ _ + d + _ } :: Nil
+		case Nil => Nil
+	}
+	val cat: Emit.Selector = cat(",")
 }
 
 case class expr(val terms: List[Term]) {

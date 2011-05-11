@@ -44,49 +44,22 @@ val d = Map(
 	"t"    -> List("3")
 )
 
-
 // parameter definitions
 val $site = param("sid")
 val $ad = param("a")
 val $event = param("e")
 val $format = param("t")
 val $tags = param("tags")
-val $shares = param("rsa")
+val $rs = param("rs")
+val $sh = param("shares")
 val $ts = param("ts")
-
-
 
 // transform rule definition
 val loggy = transform rule
-expand ~ "site["     + $site           + "]" in loggy
-expand ~ "tag["      + $tags{split}    + "]" in loggy
-expand ~ "category[" + $shares         + "]" in loggy
-expand ~ "ad["       + $ad             + "]" in loggy
-expand ~ "event["    + $event{e_name}  + "]" in loggy
-expand ~ "format["   + $format{f_name} + "]" in loggy
+expand ~ "site[" + $site + "]" + $sh{cat} + "-" + $rs{cat} in loggy
 
+val app = new App(loggy)
 
-// combining transformation rule
-val combos = transform rule
-expand ~ "tag-cat[" + $shares + "/" + $tags{split} + "]" in combos
-
-
-
-
-// example emits
-var examples = transform rule
-
-// expand site[$sid]-tags[$tags[*]]
-expand ~ "site[" + $site + "]-tags[" + $tags{*} + "]" in examples
-
-// expand tags[$tags]
-expand ~ "tags[" + $tags + "]" in examples
-
-// expand foo[$missing]
-val $missing = param("missing")
-expand ~ "foo[" + $missing + "]" in examples // bug, emits "foo[", should not emit anything
-
-
-// scope $sid/v$$week($ts)
-val scope = transform scope
-expand ~ $site + "/v" + $ts{week} to scope
+for( line <- io.Source.stdin.getLines ) {
+	app process line
+}
