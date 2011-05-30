@@ -1,1 +1,3 @@
-scala -deprecation -cp target/classes/ -i test.scala
+# scala -deprecation -cp target/classes/ org.rouzwawi.transformer.App
+export JAVA_OPTS='-Xmx1024m -Xms1024m -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode'
+scala -deprecation -cp target/classes/ tapp $1

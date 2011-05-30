@@ -26,8 +26,8 @@ case object Emit {
 	def expand(data: Data, terms: List[Term]): List[String] = terms match {
 		case t :: ts => t match {
 			case Variable(name, selector) => data get name match {
-				case Some(values) => selector apply values flatMap cat(data, ts)
-				case None => Nil
+				case Some(values) => selector apply values   flatMap cat(data, ts)
+				case None         => selector apply List("") flatMap cat(data, ts)
 			}
 			case Literal(value) => cat(data, ts)(value)
 		}
