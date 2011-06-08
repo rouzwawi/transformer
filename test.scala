@@ -18,7 +18,6 @@ object Long {
 // selector functions
 def splitcat(d:String): List[String] => List[String] = { case x:List[String] => cat(d)(split(x)) }
 
-
 // parameter definitions
 val $a = param("a")
 val $b = param("b")

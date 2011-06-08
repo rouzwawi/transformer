@@ -1,3 +1,4 @@
+import java.util.TimeZone
 import java.text.SimpleDateFormat
 
 
@@ -17,7 +18,6 @@ object tapp extends Application {
 	}
 
 	val sdf = new SimpleDateFormat("yyyy-MM-dd HH:00")
-	
 	
 	// selector functions
 	val f_name: Emit.Selector = _ map {
@@ -41,7 +41,7 @@ object tapp extends Application {
 		case "15" => "ad_first_quartile"
 		case "16" => "ad_midpoint"
 		case "17" => "ad_third_quartile"
-		case "19" => "ad_complete"
+		case "18" => "ad_complete"
 		case "21" => "slot_start"
 		case "22" => "slot_end"
 		case _   => "unknown"
@@ -66,14 +66,106 @@ object tapp extends Application {
 	val $ts = param("ts")
 
 	override def main(args: Array[String]): Unit = {
+		if (args.length < 4) {
+			println("run with:")
+			println("  <timezone> <relations> <shares> <input>")
+			return
+		}
+
+		if (TimeZone.getAvailableIDs exists { _ == args(0) }) {
+			sdf.setTimeZone(TimeZone.getTimeZone(args(0)))
+		} else {
+			println("Timezone " + args(0) + " does not exits")
+			println("Available timezones:")
+			TimeZone.getAvailableIDs map (_ + " ") map print
+			return
+		}
+
+		// relations
+		val A = 0
+		val G = 1
+		val C = 2
+		val AN = 3
+		val GN = 4
+		val CN = 5
+		val ag = new scala.collection.mutable.HashMap[String, String]
+		val ac = new scala.collection.mutable.HashMap[String, String]
+		val an = new scala.collection.mutable.HashMap[String, String]
+		val gn = new scala.collection.mutable.HashMap[String, String]
+		val cn = new scala.collection.mutable.HashMap[String, String]
+		for( line <- scala.io.Source.fromFile(args(1)).getLines ) {
+			val rel = line split "\t"
+			if (rel.length != 6) {
+				println("error in relations line")
+				println("    " + line)
+				return;
+			}
+			ag(rel(A)) = rel(G)
+			ac(rel(A)) = rel(C)
+			an(rel(A)) = rel(AN).replaceAll("/", " ")
+			gn(rel(A)) = rel(GN).replaceAll("/", " ")
+			cn(rel(A)) = rel(CN).replaceAll("/", " ")
+		}
+
+		// shares
+		val S = 0
+		val SG = 1
+		val SP = 2
+		val SN = 3
+		val sg = new scala.collection.mutable.HashMap[String, String]
+		val sp = new scala.collection.mutable.HashMap[String, String]
+		val sn = new scala.collection.mutable.HashMap[String, String]
+		for( line <- scala.io.Source.fromFile(args(2)).getLines ) {
+			val shr = line split "\t"
+			if (shr.length != 4) {
+				println("error in shares line")
+				println("    " + line)
+				return;
+			}
+			sg("SHARE:" + shr(S)) = shr(SG)
+			sp("SHARE:" + shr(S)) = "SHARE:" + shr(SP)
+			sn("SHARE:" + shr(S)) = shr(SN).replaceAll("/", " ")
+		}
+
+		// ad selector
+		val ad_path: Emit.Selector = {
+			case ad :: xs  => List(
+				cn.getOrElse(ad, "no campaign") + "/" + 
+				gn.getOrElse(ad, "no goal") + "/" + 
+				an.getOrElse(ad, "no ad")	
+			)
+			case Nil => List("unknown")
+		}
+
+		def sh(s: Option[String]): List[String] = s match {
+			case Some(id) => sn get id match {
+				case Some(name) => name :: sh(sp get id)
+				case None => Nil
+			}
+			case None => Nil
+		}
+
+		// share selector
+		def share_path(sharegroup: String): Emit.Selector = _ find { sg.get(_) == Some(sharegroup) } match {
+			case Some(share) => List( sh(Option(share)).reverse.reduceLeft( _ + "/" + _ ) )
+			case None => List("unknown")
+		}
+
 		// transform rule definition
 		val loggy = transform.rule
-		expand ~ $event{e_name} + "," + $ts{hour} + "," + $ad + "," + $format{f_name} + "," + $rsa{splitcat("/")} + "," + $tags{splitcat("/")}  in loggy
+		expand ~ 
+		$event{e_name}						 + "," + 
+		$ts{hour}							 + "," + 
+		$ad{ad_path}						 + "," + 
+		$format{f_name}						 + "," + 
+		$rs{share_path("Sites")}			 + "," + 
+		$rs{share_path("Content partners")}	 + "," + 
+		$tags{splitcat("/")}				 in loggy
 
-		println("event,time,ad,format,shares,tags")
+		//println("event,time,ad,format,shares,tags")
 
 		val app = new App(loggy)
-		for( line <- io.Source.stdin.getLines ) {
+		for( line <- scala.io.Source.fromFile(args(3)).getLines ) {
 		    app process line
 		}
 	}
