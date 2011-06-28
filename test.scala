@@ -28,5 +28,5 @@ expand ~ $a + "," + $b{splitcat("/")} in loggy
 
 val app = new App(loggy)
 for( line <- io.Source.stdin.getLines ) {
-    app process line
+    if (!line.isEmpty) app process line
 }

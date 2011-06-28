@@ -195,8 +195,9 @@ object tapp extends Application {
 		//println("event,time,ad,format,shares,tags")
 
 		val app = new App(loggy)
+
 		for( line <- scala.io.Source.fromFile(args(3)).getLines ) {
-			app process line
+		    if (!line.isEmpty) app process line
 		}
 	}
 }
