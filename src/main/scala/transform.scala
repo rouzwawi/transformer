@@ -88,23 +88,32 @@ object tapp extends Application {
 		val AN = 3
 		val GN = 4
 		val CN = 5
+		val ADVN = 6
+		val BRNN = 7
+		val AGEN = 8
 		val ag = new scala.collection.mutable.HashMap[String, String]
 		val ac = new scala.collection.mutable.HashMap[String, String]
 		val an = new scala.collection.mutable.HashMap[String, String]
 		val gn = new scala.collection.mutable.HashMap[String, String]
 		val cn = new scala.collection.mutable.HashMap[String, String]
+		val advn = new scala.collection.mutable.HashMap[String, String]
+		val brnn = new scala.collection.mutable.HashMap[String, String]
+		val agen = new scala.collection.mutable.HashMap[String, String]
 		for( line <- scala.io.Source.fromFile(args(1)).getLines ) {
 			val rel = line split "\t"
-			if (rel.length != 6) {
+			if (rel.length < 6) {
 				println("error in relations line")
 				println("    " + line)
 				return;
 			}
 			ag(rel(A)) = rel(G)
 			ac(rel(A)) = rel(C)
-			an(rel(A)) = rel(AN).replaceAll("/", " ")
-			gn(rel(A)) = rel(GN).replaceAll("/", " ")
-			cn(rel(A)) = rel(CN).replaceAll("/", " ")
+			an(rel(A)) = rel(AN).replaceAll(",", "")
+			gn(rel(A)) = rel(GN).replaceAll(",", "")
+			cn(rel(A)) = rel(CN).replaceAll(",", "")
+			if (rel.length > 6 && rel(ADVN) != "") advn(rel(A)) = rel(ADVN).replaceAll(",", "")
+			if (rel.length > 7 && rel(BRNN) != "") brnn(rel(A)) = rel(BRNN).replaceAll(",", "")
+			if (rel.length > 8 && rel(AGEN) != "") agen(rel(A)) = rel(AGEN).replaceAll(",", "")
 		}
 
 		// shares
@@ -127,13 +136,29 @@ object tapp extends Application {
 			sn("SHARE:" + shr(S)) = shr(SN).replaceAll("/", " ")
 		}
 
-		// ad selector
-		val ad_path: Emit.Selector = {
-			case ad :: xs  => List(
-				cn.getOrElse(ad, "no campaign") + "/" + 
-				gn.getOrElse(ad, "no goal") + "/" + 
-				an.getOrElse(ad, "no ad")	
-			)
+		// name selectors
+		val ad_name: Emit.Selector = {
+			case ad :: xs  => List(an.getOrElse(ad, "no ad"))
+			case Nil => List("unknown")
+		}
+		val goal_name: Emit.Selector = {
+			case ad :: xs  => List(gn.getOrElse(ad, "no goal"))
+			case Nil => List("unknown")
+		}
+		val campaign_name: Emit.Selector = {
+			case ad :: xs  => List(cn.getOrElse(ad, "no campaign"))
+			case Nil => List("unknown")
+		}
+		val advertiser_name: Emit.Selector = {
+			case ad :: xs  => List(advn.getOrElse(ad, "no advertiser"))
+			case Nil => List("unknown")
+		}
+		val brand_name: Emit.Selector = {
+			case ad :: xs  => List(brnn.getOrElse(ad, "no brand"))
+			case Nil => List("unknown")
+		}
+		val agency_name: Emit.Selector = {
+			case ad :: xs  => List(agen.getOrElse(ad, "no agency"))
 			case Nil => List("unknown")
 		}
 
@@ -156,8 +181,13 @@ object tapp extends Application {
 		expand ~ 
 		$event{e_name}						 + "," + 
 		$ts{hour}							 + "," + 
-		$ad{ad_path}						 + "," + 
 		$format{f_name}						 + "," + 
+		$ad{campaign_name}					 + "," + 
+		$ad{goal_name}						 + "," + 
+		$ad{ad_name}						 + "," + 
+		$ad{advertiser_name}				 + "," + 
+		$ad{brand_name}						 + "," + 
+		$ad{agency_name}					 + "," + 
 		$rs{share_path("Sites")}			 + "," + 
 		$rs{share_path("Content partners")}	 + "," + 
 		$tags{splitcat("/")}				 in loggy
@@ -166,7 +196,7 @@ object tapp extends Application {
 
 		val app = new App(loggy)
 		for( line <- scala.io.Source.fromFile(args(3)).getLines ) {
-		    app process line
+			app process line
 		}
 	}
 }
