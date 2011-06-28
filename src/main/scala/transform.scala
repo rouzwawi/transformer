@@ -42,7 +42,7 @@ object tapp extends Application {
 
 		val app = new App(loggy)
 		for( line <- scala.io.Source.fromFile(args(1)).getLines ) {
-		    app process line
+		    if (!line.isEmpty) app process line
 		}
 	}
 }
